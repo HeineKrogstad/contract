@@ -7,6 +7,7 @@ contract Crowdfunding {
 
     // Переменные для хранения информации о сборе средств
     address public creator; // Адрес создателя контракта
+    string public companyName; // Название компании
     uint public goalAmount; // Целевая сумма для сбора
     uint public deadline; // Сроки сбора средств в timestamp
     uint public totalAmount; // Общая сумма, собранная на данный момент
@@ -17,8 +18,9 @@ contract Crowdfunding {
     event FundsReleased();
 
     // Конструктор контракта, устанавливающий параметры сбора
-    constructor(uint _goalAmount, uint _durationMinutes) {
+    constructor(uint _goalAmount, uint _durationMinutes, string memory _companyName) {
         creator = msg.sender;
+        companyName = _companyName;
         goalAmount = _goalAmount * 1 ether; // Преобразуем сумму в wei
         deadline = block.timestamp + (_durationMinutes * 1 minutes); // Устанавливаем сроки в timestamp
     }
@@ -58,4 +60,10 @@ contract Crowdfunding {
 
         contributions[msg.sender] = 0;
     }
+
+    // Функция для получения названия компании
+    function getCompanyName() public view returns (string memory) {
+        return companyName;
+    }
 }
+
