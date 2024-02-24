@@ -2,14 +2,12 @@
 pragma solidity ^0.8.0;
 
 contract Crowdfunding {
-
     address public creator;
     string public companyName;
     uint public goalAmount;
     uint public deadline;
     uint public totalAmount;
     mapping(address => uint) public contributions;
-    address public doublingContract;
 
     event ContributionMade(address contributor, uint amount);
     event FundsReleased();
@@ -19,10 +17,6 @@ contract Crowdfunding {
         companyName = _companyName;
         goalAmount = _goalAmount * 1 ether;
         deadline = block.timestamp + (_durationMinutes * 1 minutes);
-    }
-
-    function setDoublingContractAddress(address _doublingContract) public {
-        doublingContract = _doublingContract;
     }
 
     function contribute() public payable {
@@ -47,10 +41,6 @@ contract Crowdfunding {
         payable(creator).transfer(totalAmount);
         
         emit FundsReleased();
-
-        if (doublingContract != address(0)) {
-            DoublingContract(doublingContract).doubleContribution(creator, totalAmount);
-        }
     }
 
     function refund() public {
@@ -64,6 +54,15 @@ contract Crowdfunding {
 
         contributions[msg.sender] = 0;
     }
+
+    function getCompanyName() public view returns (string memory) {
+        return companyName;
+    }
+
+    function getContributionInfo(address contributor) external view returns (uint) {
+        return contributions[contributor];
+    }
+}
 
     function getCompanyName() public view returns (string memory) {
         return companyName;
