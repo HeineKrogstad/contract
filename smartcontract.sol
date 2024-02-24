@@ -63,8 +63,3 @@ contract Crowdfunding {
         return contributions[contributor];
     }
 }
-
-    function getCompanyName() public view returns (string memory) {
-        return companyName;
-    }
-}
