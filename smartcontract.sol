@@ -36,6 +36,12 @@ contract Crowdfunding {
         emit ContributionMade(msg.sender, msg.value);
     }
 
+    // Функция для получения оставшегося времени до завершения контракта
+    function timeRemaining() public view returns (uint) {
+        require(block.timestamp < deadline, "Contract has already ended");
+        return deadline - block.timestamp;
+    }
+
     // Функция для проверки состояния и выпуска средств
     function releaseFunds() public {
         require(block.timestamp >= deadline, "The fundraising has not been completed yet");
