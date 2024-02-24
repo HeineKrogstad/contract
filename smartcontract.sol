@@ -1,31 +1,30 @@
 // SPDX-License-Identifier: MIT
-// Указываем версию Solidity для компилятора
 pragma solidity ^0.8.0;
 
-// Объявляем контракт
 contract Crowdfunding {
 
-    // Переменные для хранения информации о сборе средств
-    address public creator; // Адрес создателя контракта
-    string public companyName; // Название компании
-    uint public goalAmount; // Целевая сумма для сбора
-    uint public deadline; // Сроки сбора средств в timestamp
-    uint public totalAmount; // Общая сумма, собранная на данный момент
-    mapping(address => uint) public contributions; // Маппинг для хранения внесенных средств каждого участника
+    address public creator;
+    string public companyName;
+    uint public goalAmount;
+    uint public deadline;
+    uint public totalAmount;
+    mapping(address => uint) public contributions;
+    address public doublingContract;
 
-    // События для отслеживания изменений
     event ContributionMade(address contributor, uint amount);
     event FundsReleased();
 
-    // Конструктор контракта, устанавливающий параметры сбора
     constructor(uint _goalAmount, uint _durationMinutes, string memory _companyName) {
         creator = msg.sender;
         companyName = _companyName;
-        goalAmount = _goalAmount * 1 ether; // Преобразуем сумму в wei
-        deadline = block.timestamp + (_durationMinutes * 1 minutes); // Устанавливаем сроки в timestamp
+        goalAmount = _goalAmount * 1 ether;
+        deadline = block.timestamp + (_durationMinutes * 1 minutes);
     }
 
-    // Функция для внесения средств
+    function setDoublingContractAddress(address _doublingContract) public {
+        doublingContract = _doublingContract;
+    }
+
     function contribute() public payable {
         require(block.timestamp < deadline, "The fundraising period has expired");
         require(totalAmount + msg.value <= goalAmount, "The target amount has been exceeded");
@@ -36,24 +35,24 @@ contract Crowdfunding {
         emit ContributionMade(msg.sender, msg.value);
     }
 
-    // Функция для получения оставшегося времени до завершения контракта
     function timeRemaining() public view returns (uint) {
         require(block.timestamp < deadline, "Contract has already ended");
         return deadline - block.timestamp;
     }
 
-    // Функция для проверки состояния и выпуска средств
     function releaseFunds() public {
         require(block.timestamp >= deadline, "The fundraising has not been completed yet");
         require(totalAmount >= goalAmount, "The target amount has not been reached");
 
-        // Отправляем средства создателю контракта
         payable(creator).transfer(totalAmount);
         
         emit FundsReleased();
+
+        if (doublingContract != address(0)) {
+            DoublingContract(doublingContract).doubleContribution(creator, totalAmount);
+        }
     }
 
-    // Функция для возврата средств в случае не достижения целевой суммы
     function refund() public {
         require(block.timestamp >= deadline, "The fundraising has not been completed yet");
         require(totalAmount < goalAmount, "The target amount has been reached");
@@ -61,15 +60,12 @@ contract Crowdfunding {
         uint amountToRefund = contributions[msg.sender];
         require(amountToRefund > 0, "You have not deposited any funds");
 
-        // Возвращаем средства участнику
         payable(msg.sender).transfer(amountToRefund);
 
         contributions[msg.sender] = 0;
     }
 
-    // Функция для получения названия компании
     function getCompanyName() public view returns (string memory) {
         return companyName;
     }
 }
-
